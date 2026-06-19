@@ -71,6 +71,23 @@ class QueryEventsTest {
     });
   }
 
+  @test public "parse(canonical_time:2017-01-01,2018-01-01)"() {
+    assert.deepEqual(parse("canonical_time:2017-01-01,2018-01-01"), {
+      bool: {
+        filter: [
+          {
+            range: {
+              canonical_time: {
+                gte: 1483228800000,
+                lt: 1514764800000,
+              },
+            },
+          },
+        ],
+      },
+    });
+  }
+
   @test public "parse(actor.id:b82c4cfa428342ac822c42c1f6b89200)"() {
     assert.deepEqual(parse("actor.id:b82c4cfa428342ac822c42c1f6b89200"), {
       bool: {

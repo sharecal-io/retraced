@@ -176,6 +176,7 @@ export function parse(searchQuery: string): any {
       "crud",
       "received",
       "created",
+      "canonical_time",
       "actor.id",
       "actor.name",
       "description",
@@ -241,6 +242,19 @@ export function parse(searchQuery: string): any {
       q.bool.filter.push({
         range: {
           created: {
+            gte: range[0].valueOf(),
+            lt: range[1].valueOf(),
+          },
+        },
+      });
+    }
+
+    if (keywords.canonical_time) {
+      const range = scrubDatetimeRange(keywords.canonical_time);
+
+      q.bool.filter.push({
+        range: {
+          canonical_time: {
             gte: range[0].valueOf(),
             lt: range[1].valueOf(),
           },

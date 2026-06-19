@@ -45,6 +45,7 @@ export interface ParsedQuery {
   crud?: string[];
   received?: [number, number];
   created?: [number, number];
+  canonical_time?: [number, number];
   actor_id?: string[];
   actor_name?: string[];
   description?: string[];
@@ -61,6 +62,7 @@ const structuredQueryKeywords = [
   "crud",
   "received",
   "created",
+  "canonical_time",
   "actor.id",
   "actor.name",
   "description",
@@ -138,6 +140,9 @@ export function parseQuery(query: string): ParsedQuery {
   }
   if (intermediate.received) {
     parsed.received = scrubDatetimeRange(intermediate.received);
+  }
+  if (intermediate.canonical_time) {
+    parsed.canonical_time = scrubDatetimeRange(intermediate.canonical_time);
   }
 
   return parsed;

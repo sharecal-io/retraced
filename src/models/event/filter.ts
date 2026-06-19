@@ -197,6 +197,13 @@ export function getFilters(query: ParsedQuery, scope: Scope): Filter[] {
     });
   }
 
+  if (query.canonical_time) {
+    filters.push({
+      where: `(doc -> 'canonical_time')::text::bigint >= ${nextParam()} AND (doc -> 'canonical_time')::text::bigint < ${nextParam()}`,
+      values: query.canonical_time,
+    });
+  }
+
   if (query.actor_id) {
     const some = _.map(query.actor_id, (id) => {
       return {
