@@ -307,7 +307,7 @@ const tests = [
       },
       { where: "project_id = $2", values: ["proj1"] },
       { where: "environment_id = $3", values: ["env1"] },
-      { where: "(doc -> 'group' -> 'id') @> $4", values: ['"group1"'] },
+      { where: "(doc -> 'group' ->> 'id') = $4", values: ["group1"] },
       { where: "(doc -> 'target' -> 'id') @> $5", values: ['"target1"'] },
     ],
   },
