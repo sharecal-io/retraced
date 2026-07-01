@@ -1,4 +1,3 @@
--- SQL goes here
 -- Composite btree for org-scoped audit-log queries (LEV-2813).
 --
 -- An org export orders by canonical_time but filters by group. With only the

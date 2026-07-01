@@ -288,6 +288,24 @@ const tests = [
       { where: "environment_id = $3", values: ["env1"] },
     ],
   },
+  // scope with a groupId only (no targetId): pins the group filter at $3 and
+  // proves paramer() doesn't miscount when targetId is absent
+  {
+    query: "",
+    parsed: {
+      text: "",
+    },
+    scope: {
+      projectId: "proj1",
+      environmentId: "env1",
+      groupId: "group1",
+    },
+    filters: [
+      { where: "project_id = $1", values: ["proj1"] },
+      { where: "environment_id = $2", values: ["env1"] },
+      { where: "(doc -> 'group' ->> 'id') = $3", values: ["group1"] },
+    ],
+  },
   // scope with a groupId and targetId
   {
     query: "crud:r",
