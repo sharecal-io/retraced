@@ -12,15 +12,33 @@
 -- group scope filter from the GIN @> operator to =. The GIN @> operator cannot
 -- use this index.
 --
--- IF NOT EXISTS: prod/next build this by hand with CREATE INDEX CONCURRENTLY
--- (no write-lock on the live table) before this migration ships, so here it is a
--- no-op there; on fresh/dev/CI databases it builds the index.
-CREATE INDEX IF NOT EXISTS indexed_events_group_canonical_time_idx ON indexed_events (
-  project_id,
-  environment_id,
-  ((doc -> 'group' ->> 'id')),
-  ((doc -> 'canonical_time')::text::bigint),
-  id
-);
+-- This migration will NOT build the index non-concurrently on a populated
+-- indexed_events -- that would take a lock blocking audit-log ingestion for the
+-- whole build. Instead:
+--   * index already present (prod/next, built by hand with CREATE INDEX
+--     CONCURRENTLY per the runbook) -> no-op.
+--   * table populated but index missing (DR restore / fresh prod-sized DB /
+--     dropped-and-re-migrated) -> RAISE, failing the deploy loudly so an
+--     operator runs the CONCURRENTLY step, rather than silently locking writes.
+--   * empty table (dev / CI / local) -> build inline; nothing to lock.
+DO $$
+BEGIN
+  IF to_regclass('indexed_events_group_canonical_time_idx') IS NOT NULL THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM indexed_events LIMIT 1) THEN
+    RAISE EXCEPTION 'indexed_events is populated but indexed_events_group_canonical_time_idx is missing. Build it manually with CREATE INDEX CONCURRENTLY (see LEV-2813 runbook), then re-run migrate. Refusing to build non-concurrently on a populated table (it would lock out ingestion for the whole build).';
+  END IF;
+
+  CREATE INDEX indexed_events_group_canonical_time_idx ON indexed_events (
+    project_id,
+    environment_id,
+    ((doc -> 'group' ->> 'id')),
+    ((doc -> 'canonical_time')::text::bigint),
+    id
+  );
+END
+$$;
 
 ANALYZE indexed_events;
