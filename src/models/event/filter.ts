@@ -305,8 +305,13 @@ export function getFilters(query: ParsedQuery, scope: Scope): Filter[] {
   });
   if (scope.groupId) {
     filters.push({
-      where: `(doc -> 'group' -> 'id') @> ${nextParam()}`,
-      values: [quote(scope.groupId)],
+      // Equality (not the GIN @> operator) so the planner can use the
+      // (project_id, environment_id, group_id, canonical_time, id) composite
+      // index as an Index Cond and seek straight to this org's rows already
+      // ordered by canonical_time (LEV-2813). ->> extracts text, so the value
+      // is the bare id, not a quoted JSON string.
+      where: `(doc -> 'group' ->> 'id') = ${nextParam()}`,
+      values: [scope.groupId],
     });
   }
   if (scope.targetId) {
